@@ -52,7 +52,41 @@ const initialNotifications: NotificationItem[] = [
 let notificationsList: NotificationItem[] = [...initialNotifications];
 const listeners = new Set<() => void>();
 
+let ws: WebSocket | null = null;
+
 export const notificationsStore = {
+  initWebSocket() {
+    if (typeof window === "undefined" || ws) return;
+    try {
+      ws = new WebSocket("ws://localhost:8000/ws/notifications");
+      
+      ws.onmessage = (event) => {
+        try {
+          const notif = JSON.parse(event.data);
+          notificationsList = [notif, ...notificationsList];
+          
+          const type = notif.type;
+          const toastFn = type === "critical" ? toast.error : type === "success" ? toast.success : type === "warning" ? toast.warning : toast.info;
+          toastFn(`${notif.title}`, {
+            description: notif.message,
+            duration: 5000,
+          });
+          
+          this.emit();
+        } catch (err) {
+          console.error("Error parsing websocket message", err);
+        }
+      };
+
+      ws.onclose = () => {
+        ws = null;
+        setTimeout(() => this.initWebSocket(), 3000);
+      };
+    } catch (e) {
+      console.error("WebSocket connection failed", e);
+    }
+  },
+
   getNotifications() {
     return notificationsList;
   },
@@ -111,3 +145,8 @@ export const notificationsStore = {
     this.emit();
   },
 };
+
+// Initialize connection on client side
+if (typeof window !== "undefined") {
+  notificationsStore.initWebSocket();
+}

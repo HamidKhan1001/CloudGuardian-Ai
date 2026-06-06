@@ -23,12 +23,16 @@ function Dashboard() {
         subtitle="Monitor costs, predict spending, identify incidents, and receive AI-powered recommendations across your entire cloud footprint."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => notificationsStore.addNotification(
-              "critical",
-              "Database Connection Failure",
-              "prod-rds-us-east scaled and is rejecting connection bursts.",
-              "prod-rds-us-east"
-            )}>
+            <Button variant="outline" size="sm" onClick={() => fetch("http://localhost:8000/api/notifications/simulate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "critical",
+                title: "Database Connection Failure",
+                message: "prod-rds-us-east scaled and is rejecting connection bursts.",
+                service: "prod-rds-us-east"
+              })
+            }).catch(console.error)}>
               <AlertTriangle className="size-3.5" /> Simulate Incident
             </Button>
             <Button variant="outline" size="sm">Last 30 days</Button>
