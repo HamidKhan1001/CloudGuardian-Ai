@@ -1,17 +1,25 @@
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import os
+import re
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import time
 import json
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 app = FastAPI()
 
-# Allow CORS for the frontend running on port 8080 or 5173
+# Allow CORS — covers Vite dev ports and production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For demo purposes, allow all origins
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,   # must be False when allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -79,3 +87,131 @@ async def simulate_notification(req: SimulateRequest):
 @app.get("/")
 def read_root():
     return {"status": "running", "message": "CloudGuardian-Ai Backend is live!"}
+
+
+# ─────────────────────────────────────────────
+#  Incident Analyst — Groq-powered analysis
+# ─────────────────────────────────────────────
+
+class IncidentAnalysisRequest(BaseModel):
+    incident_type: str
+    logs: str
+
+SYSTEM_PROMPT = """You are a Senior Cloud Incident Analyst and SRE expert.
+Your job is to analyze infrastructure logs and return a structured JSON diagnosis.
+Always respond with ONLY valid JSON — no markdown, no code fences, no explanation outside the JSON."""
+
+USER_PROMPT_TEMPLATE = """Analyze the following cloud incident logs and return ONLY a JSON object.
+
+Incident Type: {incident_type}
+
+Logs:
+{logs}
+
+Return ONLY this JSON (no markdown, no extra text):
+{{
+  "incidentType": "{incident_type}",
+  "rootCause": "Precise technical explanation of what caused this incident",
+  "severity": "Critical",
+  "confidenceScore": "94%",
+  "businessImpact": "Clear description of impact on users, revenue, and operations",
+  "recommendedActions": [
+    "Step 1: Immediate remediation action",
+    "Step 2: Root fix",
+    "Step 3: Verification",
+    "Step 4: Prevention measure"
+  ],
+  "affected_services": ["service-a", "service-b"],
+  "estimated_recovery_time": "15-30 minutes"
+}}
+
+Rules:
+- severity must be one of: Critical, High, Medium, Low
+- confidenceScore must be a percentage string like "94%"
+- recommendedActions must be an array of strings
+- All fields are required"""
+
+
+def _extract_json(text: str) -> dict:
+    """Strip any markdown fences and extract the first valid JSON object."""
+    text = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.MULTILINE)
+    text = re.sub(r"\s*```\s*$", "", text.strip(), flags=re.MULTILINE)
+    text = text.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start != -1 and end > start:
+        return json.loads(text[start:end])
+    raise ValueError(f"No valid JSON found in response:\n{text[:500]}")
+
+
+@app.post("/api/analyze-incident")
+async def analyze_incident(req: IncidentAnalysisRequest):
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
+
+    if not api_key or api_key == "your_groq_api_key_here":
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "GROQ_API_KEY is not configured. "
+                "Get a free key at https://console.groq.com/keys "
+                "then add it to backend/.env as GROQ_API_KEY=your_key"
+            ),
+        )
+
+    try:
+        from groq import Groq, RateLimitError, AuthenticationError
+
+        client = Groq(api_key=api_key)
+
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": USER_PROMPT_TEMPLATE.format(
+                        incident_type=req.incident_type,
+                        logs=req.logs,
+                    ),
+                },
+            ],
+            temperature=0.2,
+            max_tokens=1024,
+            response_format={"type": "json_object"},  # forces valid JSON output
+        )
+
+        raw = completion.choices[0].message.content or ""
+        result = _extract_json(raw)
+
+        # Normalise to consistent keys
+        normalised = {
+            "incidentType":            result.get("incidentType") or req.incident_type,
+            "rootCause":               result.get("rootCause", ""),
+            "severity":                result.get("severity", "Unknown"),
+            "confidenceScore":         str(result.get("confidenceScore", "N/A")),
+            "businessImpact":          result.get("businessImpact", ""),
+            "recommendedActions":      result.get("recommendedActions") or [],
+            "affected_services":       result.get("affected_services") or [],
+            "estimated_recovery_time": result.get("estimated_recovery_time", ""),
+        }
+
+        return {"status": "ok", "analysis": normalised}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        err = str(e)
+        if "AuthenticationError" in type(e).__name__ or "auth" in err.lower() or "invalid api key" in err.lower():
+            raise HTTPException(status_code=401, detail="Invalid GROQ_API_KEY. Check your key at https://console.groq.com/keys")
+        if "RateLimitError" in type(e).__name__ or "rate_limit" in err.lower() or "429" in err:
+            raise HTTPException(status_code=429, detail="Groq rate limit hit. Free tier allows 14,400 req/day. Wait a moment and retry.")
+        if "json" in err.lower():
+            raise HTTPException(status_code=502, detail=f"Could not parse AI response as JSON: {err}")
+        raise HTTPException(status_code=500, detail=f"AI analysis error: {err}")
+
+
+

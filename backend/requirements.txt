@@ -2,3 +2,5 @@ fastapi
 uvicorn
 websockets
 pydantic
+groq==0.13.1
+python-dotenv
