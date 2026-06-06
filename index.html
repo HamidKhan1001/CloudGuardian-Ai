@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudGuardian AI — Intelligent Cloud Operations</title>
+  <meta name="description" content="AI-powered Cloud Operations Platform — Cost forecasting, incident analysis, and intelligent recommendations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:    #0a0f1e;
+      --bg-secondary:  #0d1530;
+      --bg-card:       #111827;
+      --bg-card-hover: #1a2540;
+      --border:        #1e2d4a;
+      --blue:          #3b82f6;
+      --blue-light:    #60a5fa;
+      --cyan:          #06b6d4;
+      --green:         #10b981;
+      --orange:        #f59e0b;
+      --red:           #ef4444;
+      --purple:        #8b5cf6;
+      --text-1:        #f1f5f9;
+      --text-2:        #94a3b8;
+      --text-3:        #475569;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-1);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Layout helpers ───────────────────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .section    { padding: 88px 0; }
+    .section-alt { background: var(--bg-secondary); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+    .eyebrow {
+      font-size: .72rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+      font-weight: 800; letter-spacing: -.02em;
+      color: var(--text-1); margin-bottom: 14px;
+    }
+    .section-sub {
+      max-width: 480px; margin: 0 auto;
+      font-size: .97rem; color: var(--text-2); line-height: 1.75;
+    }
+    .section-header { text-align: center; margin-bottom: 52px; }
+
+    /* ── Buttons ──────────────────────────────────────────────────────────── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 26px; background: var(--blue);
+      border-radius: 8px; font-size: .9rem; font-weight: 600;
+      color: #fff; transition: opacity .18s, transform .18s;
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 26px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: .9rem; font-weight: 500;
+      color: var(--text-2); transition: border-color .18s, color .18s, transform .18s;
+    }
+    .btn-outline:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
+
+    /* ── Navbar ───────────────────────────────────────────────────────────── */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,15,30,.88); backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border); height: 62px;
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px;
+      height: 100%; display: flex; align-items: center; gap: 28px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 1rem; font-weight: 700; flex-shrink: 0;
+    }
+    .nav-logo-icon { font-size: 1.3rem; color: var(--blue); }
+    .logo-accent { color: var(--blue); }
+
+    .nav-links { display: flex; list-style: none; gap: 24px; margin-left: auto; }
+    .nav-links a { font-size: .86rem; font-weight: 500; color: var(--text-2); transition: color .18s; }
+    .nav-links a:hover { color: var(--text-1); }
+
+    .nav-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+    .nav-actions .btn-outline { padding: 6px 14px; font-size: .82rem; }
+    .nav-actions .btn-primary { padding: 6px 14px; font-size: .82rem; }
+
+    .hamburger { display: none; flex-direction: column; gap: 5px; margin-left: auto; padding: 4px; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--text-2); border-radius: 2px; transition: .2s; }
+
+    .mobile-menu {
+      display: none; flex-direction: column;
+      background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+      padding: 12px 24px 20px;
+    }
+    .mobile-menu a { padding: 11px 0; color: var(--text-2); font-size: .95rem; border-bottom: 1px solid var(--border); transition: color .18s; }
+    .mobile-menu a:last-of-type { border-bottom: none; }
+    .mobile-menu a:hover { color: var(--text-1); }
+    .mobile-menu .btn-primary { margin-top: 14px; justify-content: center; }
+
+    @media(max-width:768px) {
+      .nav-links, .nav-actions { display: none; }
+      .hamburger { display: flex; }
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 120px 24px 72px;
+      background: radial-gradient(ellipse at 50% 30%, #0d1b3e 0%, var(--bg-primary) 70%);
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(59,130,246,.1) 1px, transparent 0);
+      background-size: 38px 38px; pointer-events: none;
+    }
+    .hero-inner {
+      position: relative; max-width: 720px;
+      margin: 0 auto; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 26px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 15px; border: 1px solid var(--border);
+      border-radius: 100px; font-size: .78rem; font-weight: 500;
+      color: var(--blue-light); background: rgba(59,130,246,.08);
+    }
+    .pulse-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    .hero-title {
+      font-size: clamp(2rem, 5.5vw, 3.4rem);
+      font-weight: 800; line-height: 1.13; letter-spacing: -.03em;
+      color: var(--text-1);
+    }
+    .hero-title .gradient {
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub { max-width: 540px; font-size: 1.02rem; color: var(--text-2); line-height: 1.75; }
+
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+    /* Terminal */
+    .terminal {
+      width: 100%; max-width: 600px;
+      background: #0d1117; border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+      text-align: left;
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 14px; background: #161b22;
+      border-bottom: 1px solid var(--border);
+    }
+    .t-dot { width: 10px; height: 10px; border-radius: 50%; opacity: .85; }
+    .terminal-bar span.t-title {
+      margin-left: 10px; font-family: 'Fira Code', monospace;
+      font-size: .72rem; color: var(--text-3);
+    }
+    .terminal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+    .t-line {
+      display: flex; gap: 10px;
+      font-family: 'Fira Code', monospace; font-size: .8rem;
+      color: var(--text-2); line-height: 1.5;
+    }
+    .t-line .t-icon { flex-shrink: 0; }
+    .t-green { color: var(--green); }
+    .t-red   { color: var(--red); }
+    .t-yellow{ color: var(--orange); }
+    .t-blue  { color: var(--blue-light); }
+    .t-white { color: var(--text-1); }
+
+    /* ── Stats ────────────────────────────────────────────────────────────── */
+    #stats { padding: 32px 0; background: var(--bg-secondary); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; text-align: center; }
+    .stat-val { font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; }
+    .stat-label { font-size: .8rem; color: var(--text-3); margin-top: 3px; }
+    @media(max-width:600px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+
+    /* ── Grid layouts ─────────────────────────────────────────────────────── */
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; }
+    @media(max-width:900px) { .grid-3 { grid-template-columns: repeat(2,1fr); } }
+    @media(max-width:560px) { .grid-3,.grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── Cards ────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 26px;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .card:hover { background: var(--bg-card-hover); border-color: rgba(59,130,246,.38); transform: translateY(-2px); }
+
+    .card-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; margin-bottom: 14px;
+    }
+    .card-title { font-size: .97rem; font-weight: 700; color: var(--text-1); margin-bottom: 8px; }
+    .card-desc  { font-size: .85rem; color: var(--text-2); line-height: 1.65; }
+
+    /* ── Demo section ─────────────────────────────────────────────────────── */
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+    .tab {
+      padding: 10px 20px; font-size: .88rem; font-weight: 500;
+      color: var(--text-3); border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: color .18s, border-color .18s; cursor: pointer;
+    }
+    .tab:hover { color: var(--text-2); }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    .demo-panel { display: none; }
+    .demo-panel.active { display: grid; grid-template-columns: 1fr 1.5fr; gap: 48px; align-items: start; }
+    @media(max-width:680px) { .demo-panel.active { grid-template-columns: 1fr; gap: 28px; } }
+
+    .demo-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 100px;
+      font-size: .75rem; font-weight: 600; border: 1px solid; width: fit-content; margin-bottom: 14px;
+    }
+    .demo-title { font-size: 1.2rem; font-weight: 700; color: var(--text-1); margin-bottom: 10px; }
+    .demo-desc  { font-size: .88rem; color: var(--text-2); line-height: 1.7; }
+
+    .step { display: flex; gap: 16px; }
+    .step-icon-col { display: flex; flex-direction: column; align-items: center; }
+    .step-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      background: var(--bg-card); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .step-line { width: 1px; flex: 1; min-height: 20px; background: var(--border); margin: 4px 0; }
+    .step-content { padding: 8px 0 20px; }
+    .step-label { font-size: .75rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+    .step-detail { font-size: .88rem; color: var(--text-1); line-height: 1.55; }
+
+    /* ── Module cards ─────────────────────────────────────────────────────── */
+    .module-num { font-size: 1.9rem; font-weight: 900; }
+    .module-line { height: 2px; flex: 1; border-radius: 2px; opacity: .6; }
+    .module-title { font-size: .97rem; font-weight: 700; margin: 10px 0 8px; }
+    .module-desc { font-size: .85rem; color: var(--text-2); line-height: 1.65; margin-bottom: 14px; }
+    .cap-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .cap-list li { display: flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--text-2); }
+    .cap-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Tech Stack ───────────────────────────────────────────────────────── */
+    .tech-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 22px;
+      display: flex; align-items: center; gap: 14px;
+      transition: background .2s, border-color .2s;
+    }
+    .tech-card:hover { background: var(--bg-card-hover); border-color: rgba(59,130,246,.32); }
+    .tech-emoji { font-size: 1.5rem; flex-shrink: 0; }
+    .tech-layer { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); margin-bottom: 2px; }
+    .tech-name  { font-size: .88rem; font-weight: 600; }
+
+    /* ── CTA ──────────────────────────────────────────────────────────────── */
+    #cta {
+      padding: 100px 24px; text-align: center; position: relative; overflow: hidden;
+    }
+    #cta::before {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(37,99,235,.16) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-title { font-size: clamp(1.7rem,4vw,2.7rem); font-weight: 800; color: var(--text-1); line-height: 1.2; margin-bottom: 18px; }
+    .cta-sub { max-width: 440px; margin: 0 auto 32px; font-size: .97rem; color: var(--text-2); line-height: 1.75; }
+    .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Workflow diagram ─────────────────────────────────────────────────── */
+    .workflow {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+      max-width: 280px; margin: 0 auto;
+    }
+    .wf-step {
+      width: 100%; padding: 10px 20px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 8px;
+      text-align: center; font-size: .88rem; font-weight: 600; color: var(--text-1);
+    }
+    .wf-arrow { font-size: 1.1rem; color: var(--text-3); margin: 4px 0; }
+
+    /* ── Footer ───────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--bg-secondary); border-top: 1px solid var(--border);
+      padding: 28px 24px;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; flex-wrap: wrap; gap: 20px;
+    }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: .84rem; color: var(--text-3); transition: color .18s; }
+    .footer-links a:hover { color: var(--text-2); }
+    .footer-copy { margin-left: auto; font-size: .8rem; color: var(--text-3); }
+
+    /* ── Animations ───────────────────────────────────────────────────────── */
+    .fade-up { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ NAVBAR -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span class="nav-logo-icon">⛨</span>
+      <span>Cloud<span class="logo-accent">Guardian</span> AI</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#modules">Modules</a></li>
+      <li><a href="#demo">Demo</a></li>
+      <li><a href="#stack">Stack</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="#demo" class="btn-outline">See Demo</a>
+      <a href="#cta" class="btn-primary">Get Started</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" role="navigation" aria-label="Mobile navigation">
+    <a href="#features" class="mobile-link">Features</a>
+    <a href="#modules" class="mobile-link">Modules</a>
+    <a href="#demo" class="mobile-link">Demo</a>
+    <a href="#stack" class="mobile-link">Stack</a>
+    <a href="#cta" class="btn-primary">Get Started</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════ HERO -->
+<section id="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="pulse-dot"></span>
+      AI-Powered Cloud Operations Platform
+    </div>
+
+    <h1 class="hero-title">
+      Your Cloud Infrastructure,<br>
+      <span class="gradient">Intelligently Managed</span>
+    </h1>
+
+    <p class="hero-sub">
+      CloudGuardian AI combines an AI Cloud CFO and AI Incident Analyst —
+      transforming raw cloud data into cost savings, instant root causes, and
+      proactive recommendations.
+    </p>
+
+    <div class="hero-ctas">
+      <a href="#demo" class="btn-primary">View Live Demo →</a>
+      <a href="#modules" class="btn-outline">Explore Modules</a>
+    </div>
+
+    <!-- Terminal -->
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="t-dot" style="background:#ef4444"></div>
+        <div class="t-dot" style="background:#f59e0b"></div>
+        <div class="t-dot" style="background:#10b981"></div>
+        <span class="t-title">cloudguardian — ai-analyst</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line"><span class="t-icon t-green">✓</span><span>Log stream connected — 1,247 events parsed</span></div>
+        <div class="t-line"><span class="t-icon t-red">✗</span><span>ERROR: Database Connection Failed detected</span></div>
+        <div class="t-line"><span class="t-icon t-yellow">→</span><span>Root Cause: <span class="t-white">Expired Database Credentials</span></span></div>
+        <div class="t-line"><span class="t-icon t-yellow">→</span><span>Severity: <span class="t-red">Critical</span> / Priority: <span class="t-red">High</span></span></div>
+        <div class="t-line"><span class="t-icon t-blue">⚡</span><span>Recovery: Rotate credentials → Restart db service</span></div>
+        <div class="t-line"><span class="t-icon t-green">✓</span><span>Notifications dispatched — Email, Slack, Teams</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ STATS -->
+<section id="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div><div class="stat-val" style="color:var(--green)">$4,200</div><div class="stat-label">Monthly savings identified</div></div>
+      <div><div class="stat-val" style="color:var(--blue)">&lt;2 min</div><div class="stat-label">Avg. incident detection time</div></div>
+      <div><div class="stat-val" style="color:var(--purple)">3</div><div class="stat-label">Notification channels</div></div>
+      <div><div class="stat-val" style="color:var(--orange)">4</div><div class="stat-label">AI-powered modules</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ FEATURES -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="section-header fade-up">
+      <p class="eyebrow" style="color:var(--blue)">Capabilities</p>
+      <h2 class="section-title">Everything your cloud team needs</h2>
+      <p class="section-sub">Six core capabilities working together to give you full operational visibility and control.</p>
+    </div>
+    <div class="grid-3 fade-up">
+      <div class="card">
+        <div class="card-icon" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.22)">💰</div>
+        <div class="card-title">Cost Prediction</div>
+        <div class="card-desc">Forecast next month's bill before the invoice arrives. Catch spending anomalies early with AI-driven usage trend analysis.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.22)">📊</div>
+        <div class="card-title">Cost Explanation</div>
+        <div class="card-desc">Plain-language breakdowns — "Costs increased 37% due to traffic surges and additional compute scaling."</div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.22)">💡</div>
+        <div class="card-title">Savings Recommendations</div>
+        <div class="card-desc">Actionable tasks — remove idle servers, use spot instances, right-size databases — with exact savings estimates.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22)">🔍</div>
+        <div class="card-title">Log Analysis</div>
+        <div class="card-desc">Feed in raw unstructured logs. The AI parses thousands of events per second and flags critical errors instantly.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.22)">🎯</div>
+        <div class="card-title">Root Cause Detection</div>
+        <div class="card-desc">No more guessing. CloudGuardian pinpoints exactly why something failed — from expired credentials to misconfigured routes.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.22)">🔔</div>
+        <div class="card-title">Multi-Channel Alerts</div>
+        <div class="card-desc">Structured alerts delivered simultaneously to Email, Slack, and Microsoft Teams — rich templates, zero setup friction.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ DEMO -->
+<section id="demo" class="section section-alt">
+  <div class="container">
+    <div class="section-header fade-up">
+      <p class="eyebrow" style="color:var(--cyan)">Live Demo</p>
+      <h2 class="section-title">See CloudGuardian AI in action</h2>
+      <p class="section-sub">Two reference scenarios showing exactly how the platform responds to real operational events.</p>
+    </div>
+
+    <div class="tabs fade-up" role="tablist">
+      <button class="tab active" role="tab" aria-selected="true"  data-tab="traffic">Traffic Spike</button>
+      <button class="tab"        role="tab" aria-selected="false" data-tab="db">Database Failure</button>
+    </div>
+
+    <!-- Traffic Spike panel -->
+    <div class="demo-panel active" id="panel-traffic" role="tabpanel">
+      <div>
+        <div class="demo-badge" style="color:var(--green);border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08)">Cost Event</div>
+        <div class="demo-title">Infrastructure Traffic Spike</div>
+        <div class="demo-desc">Concurrent user traffic spikes by 500%, triggering rapid compute scaling and database expansion.</div>
+      </div>
+      <div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">📈</div><div class="step-line"></div></div>
+          <div class="step-content"><div class="step-label">Detection</div><div class="step-detail">AI Cloud CFO detects 500% traffic growth and abnormal resource provisioning</div></div>
+        </div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">💸</div><div class="step-line"></div></div>
+          <div class="step-content"><div class="step-label">Forecast</div><div class="step-detail">Predicted Monthly Bill: $18,500 — up from baseline $13,600</div></div>
+        </div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">💡</div><div class="step-line"></div></div>
+          <div class="step-content"><div class="step-label">Recommendations</div><div class="step-detail">Migrate worker nodes to Spot Instances · Downsize over-provisioned databases</div></div>
+        </div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">✅</div></div>
+          <div class="step-content"><div class="step-label">Savings</div><div class="step-detail">Potential savings identified: $4,200/month</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Database Failure panel -->
+    <div class="demo-panel" id="panel-db" role="tabpanel">
+      <div>
+        <div class="demo-badge" style="color:var(--red);border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)">Critical Incident</div>
+        <div class="demo-title">Critical Database Connection Failure</div>
+        <div class="demo-desc">A standard database log exception triggers the full AI Incident Analyst pipeline.</div>
+      </div>
+      <div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">🔍</div><div class="step-line"></div></div>
+          <div class="step-content"><div class="step-label">Log Parsed</div><div class="step-detail">ERROR: Database Connection Failed — detected in 1,247 log events</div></div>
+        </div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">🎯</div><div class="step-line"></div></div>
+          <div class="step-content"><div class="step-label">Root Cause</div><div class="step-detail">Root Cause: Expired Database Credentials</div></div>
+        </div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">⚠️</div><div class="step-line"></div></div>
+          <div class="step-content"><div class="step-label">Severity</div><div class="step-detail">Severity: Critical / Priority: High — immediate action required</div></div>
+        </div>
+        <div class="step">
+          <div class="step-icon-col"><div class="step-icon">🔔</div></div>
+          <div class="step-content"><div class="step-label">Notified</div><div class="step-detail">Recovery plan dispatched → Email, Slack, Microsoft Teams</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ MODULES -->
+<section id="modules" class="section">
+  <div class="container">
+    <div class="section-header fade-up">
+      <p class="eyebrow" style="color:var(--purple)">Architecture</p>
+      <h2 class="section-title">Four modules, one platform</h2>
+      <p class="section-sub">Each module is independently focused but fully integrated — data flows between them automatically.</p>
+    </div>
+    <div class="grid-2 fade-up">
+
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+          <span class="module-num" style="color:var(--green)">01</span>
+          <div class="module-line" style="background:linear-gradient(90deg,var(--green),transparent)"></div>
+        </div>
+        <div class="module-title" style="color:var(--green)">AI Cloud CFO</div>
+        <div class="module-desc">Automated cloud financial advisor. Monitors usage, forecasts bills, explains budget drivers, and finds savings opportunities.</div>
+        <ul class="cap-list">
+          <li><span class="cap-dot" style="background:var(--green)"></span>Cost Prediction</li>
+          <li><span class="cap-dot" style="background:var(--green)"></span>Cost Explanation</li>
+          <li><span class="cap-dot" style="background:var(--green)"></span>Savings Recommendations</li>
+          <li><span class="cap-dot" style="background:var(--green)"></span>Resource Optimization</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+          <span class="module-num" style="color:var(--blue)">02</span>
+          <div class="module-line" style="background:linear-gradient(90deg,var(--blue),transparent)"></div>
+        </div>
+        <div class="module-title" style="color:var(--blue)">AI Incident Analyst</div>
+        <div class="module-desc">Automated cloud engineer. Parses log streams, identifies root causes, classifies severity, and generates step-by-step recovery plans.</div>
+        <ul class="cap-list">
+          <li><span class="cap-dot" style="background:var(--blue)"></span>Log Analysis</li>
+          <li><span class="cap-dot" style="background:var(--blue)"></span>Root Cause Detection</li>
+          <li><span class="cap-dot" style="background:var(--blue)"></span>Severity Assessment</li>
+          <li><span class="cap-dot" style="background:var(--blue)"></span>Recovery Recommendations</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+          <span class="module-num" style="color:var(--purple)">03</span>
+          <div class="module-line" style="background:linear-gradient(90deg,var(--purple),transparent)"></div>
+        </div>
+        <div class="module-title" style="color:var(--purple)">Notification Center</div>
+        <div class="module-desc">Keeps every stakeholder informed. Rich, structured templates delivered via Email, Slack webhooks, and Microsoft Teams cards.</div>
+        <ul class="cap-list">
+          <li><span class="cap-dot" style="background:var(--purple)"></span>Email Notifications</li>
+          <li><span class="cap-dot" style="background:var(--purple)"></span>Slack Alerts</li>
+          <li><span class="cap-dot" style="background:var(--purple)"></span>MS Teams Cards</li>
+          <li><span class="cap-dot" style="background:var(--purple)"></span>Custom Templates</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+          <span class="module-num" style="color:var(--orange)">04</span>
+          <div class="module-line" style="background:linear-gradient(90deg,var(--orange),transparent)"></div>
+        </div>
+        <div class="module-title" style="color:var(--orange)">Unified Dashboard</div>
+        <div class="module-desc">Single pane of glass for your cloud operations. Cost trends, active incidents, recovery timelines, and optimization history.</div>
+        <ul class="cap-list">
+          <li><span class="cap-dot" style="background:var(--orange)"></span>Cost Dashboard</li>
+          <li><span class="cap-dot" style="background:var(--orange)"></span>Incident Dashboard</li>
+          <li><span class="cap-dot" style="background:var(--orange)"></span>Reports Dashboard</li>
+          <li><span class="cap-dot" style="background:var(--orange)"></span>Real-time Updates</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ WORKFLOW -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-header fade-up">
+      <p class="eyebrow" style="color:var(--cyan)">How It Works</p>
+      <h2 class="section-title">The AI Workflow</h2>
+      <p class="section-sub">From raw cloud data to actionable insights in seconds.</p>
+    </div>
+    <div class="workflow fade-up">
+      <div class="wf-step">☁️ Cloud Metrics / Logs</div>
+      <div class="wf-arrow">↓</div>
+      <div class="wf-step" style="border-color:var(--blue);color:var(--blue-light)">⛨ CloudGuardian AI</div>
+      <div class="wf-arrow">↓</div>
+      <div class="wf-step">🔬 Analysis Engine</div>
+      <div class="wf-arrow">↓</div>
+      <div class="wf-step">💡 Recommendations</div>
+      <div class="wf-arrow">↓</div>
+      <div class="wf-step">📄 Reports</div>
+      <div class="wf-arrow">↓</div>
+      <div class="wf-step">🔔 Notifications</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ TECH STACK -->
+<section id="stack" class="section">
+  <div class="container">
+    <div class="section-header fade-up">
+      <p class="eyebrow" style="color:var(--orange)">Technology</p>
+      <h2 class="section-title">Built on a proven stack</h2>
+    </div>
+    <div class="grid-3 fade-up">
+      <div class="tech-card"><span class="tech-emoji">⚛️</span><div><div class="tech-layer">Frontend</div><div class="tech-name" style="color:var(--cyan)">React / Next.js</div></div></div>
+      <div class="tech-card"><span class="tech-emoji">🟢</span><div><div class="tech-layer">Backend</div><div class="tech-name" style="color:var(--green)">Node.js</div></div></div>
+      <div class="tech-card"><span class="tech-emoji">🍃</span><div><div class="tech-layer">Database</div><div class="tech-name" style="color:var(--green)">MongoDB</div></div></div>
+      <div class="tech-card"><span class="tech-emoji">🤖</span><div><div class="tech-layer">AI / LLM</div><div class="tech-name" style="color:var(--purple)">Claude · OpenAI · Bedrock</div></div></div>
+      <div class="tech-card"><span class="tech-emoji">🔔</span><div><div class="tech-layer">Notifications</div><div class="tech-name" style="color:var(--orange)">SMTP · Slack · MS Teams</div></div></div>
+      <div class="tech-card"><span class="tech-emoji">☁️</span><div><div class="tech-layer">Infrastructure</div><div class="tech-name" style="color:var(--orange)">Amazon Web Services</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ CTA -->
+<section id="cta">
+  <div style="position:relative">
+    <h2 class="cta-title fade-up">Ready to put your cloud on autopilot?</h2>
+    <p class="cta-sub fade-up">Get full visibility into costs and incidents from day one. No configuration overhead — connect and let the AI work.</p>
+    <div class="cta-btns fade-up">
+      <a href="#modules" class="btn-primary">Explore the Platform →</a>
+      <a href="https://github.com" target="_blank" rel="noreferrer" class="btn-outline">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="#" class="nav-logo">
+      <span class="nav-logo-icon">⛨</span>
+      <span>Cloud<span class="logo-accent">Guardian</span> AI</span>
+    </a>
+    <nav class="footer-links">
+      <a href="#features">Features</a>
+      <a href="#modules">Modules</a>
+      <a href="#demo">Demo</a>
+      <a href="#stack">Stack</a>
+    </nav>
+    <span class="footer-copy">Built for the Ship With Kiro Hackathon</span>
+  </div>
+</footer>
+
+<script>
+  // ── Mobile menu toggle ──────────────────────────────────────────────────
+  const hamburger   = document.getElementById('hamburger');
+  const mobileMenu  = document.getElementById('mobile-menu');
+  const mobileLinks = document.querySelectorAll('.mobile-link');
+
+  hamburger.addEventListener('click', () => {
+    const open = mobileMenu.style.display === 'flex';
+    mobileMenu.style.display = open ? 'none' : 'flex';
+    hamburger.setAttribute('aria-expanded', String(!open));
+  });
+
+  mobileLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu.style.display = 'none';
+      hamburger.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // ── Demo tab switching ──────────────────────────────────────────────────
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Deactivate all
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
+
+      // Activate selected
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Scroll-triggered fade-up animations ───────────────────────────────
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // ── Navbar background on scroll ─────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const navbar = document.getElementById('navbar');
+    navbar.style.background = window.scrollY > 40
+      ? 'rgba(10,15,30,0.97)'
+      : 'rgba(10,15,30,0.88)';
+  }, { passive: true });
+</script>
+
+</body>
+</html>
