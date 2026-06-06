@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bot, Sparkles, TrendingUp, AlertTriangle, Lightbulb, Send, ArrowRight } from "lucide-react";
 import { Button, Card, PageHeader, SectionTitle, AreaChart } from "@/components/ui-kit";
@@ -10,6 +11,64 @@ export const Route = createFileRoute("/_app/cfo")({
 const forecast = [12.4,12.8,13.1,13.7,14.2,14.9,15.6,16.1,16.7,17.3,17.9,18.5];
 
 function CFO() {
+  const [messages, setMessages] = useState<{role: "user" | "ai", text: string}[]>([
+    { role: "user", text: "Why did our DB costs spike last week?" },
+    { role: "ai", text: "prod-rds-us-east scaled from db.r6g.xlarge → 4xlarge on Tue 19:42 UTC after a connection burst from the checkout service. It hasn't scaled back. Recommend setting a max-instance ceiling and enabling connection pooling — projected savings $640/month." }
+  ]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+    
+    console.log("Button clicked. Sending message:", input);
+    
+    const userMessage = { role: "user" as const, text: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+    
+    try {
+      console.log("Request sent to http://localhost:8000/api/cfo/chat");
+      const response = await fetch("http://localhost:8000/api/cfo/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: userMessage.text })
+      });
+      
+      console.log("Fetch response status:", response.status, response.statusText);
+      
+      let data;
+      try {
+        data = await response.json();
+        console.log("Response JSON:", data);
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        throw new Error("Invalid JSON response from backend");
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP Error ${response.status}: ${JSON.stringify(data)}`);
+      }
+      
+      let aiText = data.summary || "No summary provided.";
+      if (data.recommendations && data.recommendations.length > 0) {
+        aiText += `\n\nRecommendations:\n- ${data.recommendations.join('\n- ')}`;
+      }
+      if (data.estimated_savings) {
+        aiText += `\n\nEstimated Savings: $${data.estimated_savings}`;
+      }
+      
+      setMessages(prev => [...prev, { role: "ai" as const, text: aiText }]);
+    } catch (error: any) {
+      console.error("Exact fetch error details:", error);
+      console.error("Error message:", error.message);
+      setMessages(prev => [...prev, { role: "ai" as const, text: `Error connecting to CFO backend: ${error.message || "Unknown error"}` }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -71,18 +130,29 @@ function CFO() {
       <Card>
         <SectionTitle title="Ask the CFO" hint="Natural-language queries over your cloud financials" />
         <div className="rounded-xl border border-border bg-bg-2/60 p-4">
-          <div className="space-y-4 mb-4">
-            <ChatBubble role="user">Why did our DB costs spike last week?</ChatBubble>
-            <ChatBubble role="ai">
-              prod-rds-us-east scaled from db.r6g.xlarge → 4xlarge on Tue 19:42 UTC after a connection burst from
-              the checkout service. It hasn't scaled back. Recommend setting a max-instance ceiling and enabling
-              connection pooling — projected savings $640/month.
-            </ChatBubble>
+          <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto">
+            {messages.map((m, i) => (
+              <ChatBubble key={i} role={m.role}>
+                {m.text.split('\n').map((line, j) => (
+                  <span key={j}>
+                    {line}
+                    <br />
+                  </span>
+                ))}
+              </ChatBubble>
+            ))}
+            {isLoading && <ChatBubble role="ai">Thinking...</ChatBubble>}
           </div>
           <div className="flex items-center gap-2 rounded-xl border border-border bg-white/[0.03] px-3">
             <Sparkles className="size-4 text-primary" />
-            <input placeholder="Ask anything about your cloud spend..." className="flex-1 h-11 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground" />
-            <Button size="sm"><Send className="size-3.5" /></Button>
+            <input 
+              placeholder="Ask anything about your cloud spend..." 
+              className="flex-1 h-11 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground" 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+            />
+            <Button size="sm" onClick={handleSend} disabled={isLoading}><Send className="size-3.5" /></Button>
           </div>
         </div>
       </Card>
