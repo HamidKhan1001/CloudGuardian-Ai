@@ -9,27 +9,22 @@ import json
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Load .env once, from the correct path
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
-
-from api.routes_cfo import router as cfo_router
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
 
 app = FastAPI()
 
-# Allow CORS for the frontend running on port 8080 or 5173
+# Allow CORS — covers all Vite dev ports and production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For demo purposes, allow all origins
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,   # must be False when allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ── CFO router ────────────────────────────────────────────────────────────
+from api.routes_cfo import router as cfo_router
 app.include_router(cfo_router, prefix="/api/cfo", tags=["CFO"])
 
 class ConnectionManager:
