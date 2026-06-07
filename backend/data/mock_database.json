@@ -1,0 +1,66 @@
+{
+  "default": {
+    "current_cloud_spend": 12450.00,
+    "predicted_monthly_bill": 18200.00,
+    "potential_savings": 3150.00,
+    "resources": [
+      {"id": "ec2-001", "type": "Compute", "cost": 450, "status": "running", "cpu_util": 85},
+      {"id": "ec2-002", "type": "Compute", "cost": 320, "status": "running", "cpu_util": 2},
+      {"id": "rds-001", "type": "Database", "cost": 1200, "status": "running", "cpu_util": 15},
+      {"id": "ebs-001", "type": "Storage", "cost": 100, "status": "unattached", "size_gb": 500},
+      {"id": "nat-001", "type": "Network", "cost": 350, "status": "active", "traffic_gb": 15000}
+    ],
+    "daily_costs": [
+      {"date": "2023-10-01", "cost": 400},
+      {"date": "2023-10-02", "cost": 410},
+      {"date": "2023-10-03", "cost": 415}
+    ]
+  },
+  "traffic_spike": {
+    "current_cloud_spend": 16500.00,
+    "predicted_monthly_bill": 25000.00,
+    "potential_savings": 500.00,
+    "resources": [
+      {"id": "ec2-001", "type": "Compute", "cost": 450, "status": "running", "cpu_util": 95},
+      {"id": "ec2-002", "type": "Compute", "cost": 320, "status": "running", "cpu_util": 80},
+      {"id": "nat-001", "type": "Network", "cost": 1200, "status": "active", "traffic_gb": 55000},
+      {"id": "cf-001", "type": "Network", "cost": 800, "status": "active", "traffic_gb": 120000}
+    ],
+    "daily_costs": [
+      {"date": "2023-10-01", "cost": 400},
+      {"date": "2023-10-02", "cost": 410},
+      {"date": "2023-10-03", "cost": 1500}
+    ]
+  },
+  "db_oversizing": {
+    "current_cloud_spend": 15200.00,
+    "predicted_monthly_bill": 15200.00,
+    "potential_savings": 2400.00,
+    "resources": [
+      {"id": "rds-primary", "type": "Database", "cost": 2400, "status": "running", "cpu_util": 3},
+      {"id": "rds-replica", "type": "Database", "cost": 1200, "status": "running", "cpu_util": 1},
+      {"id": "ec2-001", "type": "Compute", "cost": 450, "status": "running", "cpu_util": 70}
+    ],
+    "daily_costs": [
+      {"date": "2023-10-01", "cost": 500},
+      {"date": "2023-10-02", "cost": 500},
+      {"date": "2023-10-03", "cost": 500}
+    ]
+  },
+  "unexpected_cost_surge": {
+    "current_cloud_spend": 18900.00,
+    "predicted_monthly_bill": 28000.00,
+    "potential_savings": 4500.00,
+    "resources": [
+      {"id": "ec2-001", "type": "Compute", "cost": 450, "status": "running", "cpu_util": 85},
+      {"id": "redshift-cluster", "type": "Database", "cost": 4000, "status": "running", "cpu_util": 5},
+      {"id": "ebs-unattached-1", "type": "Storage", "cost": 500, "status": "unattached", "size_gb": 2500},
+      {"id": "ebs-unattached-2", "type": "Storage", "cost": 500, "status": "unattached", "size_gb": 2500}
+    ],
+    "daily_costs": [
+      {"date": "2023-10-01", "cost": 400},
+      {"date": "2023-10-02", "cost": 400},
+      {"date": "2023-10-03", "cost": 2500}
+    ]
+  }
+}
