@@ -6,16 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import time
 import json
+from pathlib import Path
+from dotenv import load_dotenv
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+# Load .env once, from the correct path
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
 app = FastAPI()
 
-# Allow CORS — covers Vite dev ports and production
+# Allow CORS — covers all Vite dev ports and production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,6 +22,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── CFO router ────────────────────────────────────────────────────────────
+from api.routes_cfo import router as cfo_router
+app.include_router(cfo_router, prefix="/api/cfo", tags=["CFO"])
 
 class ConnectionManager:
     def __init__(self):
